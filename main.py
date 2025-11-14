@@ -1,10 +1,4 @@
-import csv
-
-def readCSV(filename):
-    with open(filename, newline='') as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-        for row in spamreader:
-            print(', '.join(row))
+from readMap.py import readMap
 
 def main():
     return
