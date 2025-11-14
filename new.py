@@ -37,6 +37,12 @@ class Node:
         self.parent = parent
         self.vector = vector
 
+    def __eq__(self, other):
+        return isinstance(other, Node) and self.y == other.y and self.x == other.x
+
+    def __hash__(self):
+        return hash((self.y, self.x))
+
 class Pathfinder:
     def __init__(self, mapData, meta):
         self.mapData = mapData
@@ -62,21 +68,24 @@ class Pathfinder:
         windSpeed = self.mapData["windSpeed"][y-1][x-1]
         return windDir, windSpeed
 
-    def checkValidMove(self, vector):
-        p2y = self.boatPos[0] + vector[0]
-        p2x = self.boatPos[1] + vector[1]
+    def checkValidMove(self, node, vector):
+        ny = node.y + vector[0]
+        nx = node.x + vector[1]
         new_dir = getCircleAngle(vector)
-        if self.boatDir is None:
+        if node.vector is None:
             return True
-        wind_dir = self.getDirSpeed(p2y, p2x)[0]
+        wind_dir = self.getDirSpeed(ny, nx)[0]
         return relative_wind_angle(new_dir, wind_dir) >= 30
 
-    def getPossibleMoves(self):
-        vectors = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
+    def getPossibleMoves(self, node):
+        boat_y, boat_x = node.y, node.x
+        boat_dir = getCircleAngle(node.vector) if node.vector else None
+        vectors = [[-1,0],[-1,1],[1,1],[1,0],[1,-1],[-1,-1]]
         possible = []
         for vector in vectors:
-            if (0 < self.boatPos[0] + vector[0] < 31) and (0 < self.boatPos[1] + vector[1] < 31):
-                if self.checkValidMove(vector): #and vector does not go out of bounds
+            ny, nx = boat_y + vector[0], boat_x + vector[1]
+            if 0 < ny < self.rows+1 and 0 < nx < self.cols+1:
+                if self.checkValidMove(node, vector):
                     possible.append(vector)
         return possible
     
@@ -92,7 +101,7 @@ class Pathfinder:
         while not (current.y == self.endPos[0] and current.x == self.endPos[1]):
             explored.append(current)
             self.boatPos = [current.y, current.x]
-            vectors = self.getPossibleMoves()
+            vectors = self.getPossibleMoves(current)
             for vector in vectors:
                 new = Node(self.boatPos[0]+vector[0], self.boatPos[1]+vector[1], current, vector)
                 if not (new in explored or new in frontier):
@@ -115,7 +124,6 @@ class Pathfinder:
 def main():
     mapData, meta = readMap("map_1_Training") #readMap(input("Map filename: "))
     pathfinder = Pathfinder(mapData, meta)
-    print(pathfinder.getPossibleMoves())
     pathfinder.search()
 
 if __name__ == "__main__":
