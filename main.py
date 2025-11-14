@@ -1,4 +1,5 @@
 import json
+import math
 
 def readMap(mapFilename):
     with open(mapFilename + ".json") as f:
@@ -8,22 +9,9 @@ def readMap(mapFilename):
     return mapData, meta
 
 def getCircleAngle(v):
-    if v == [-1,0]:
-        return 0
-    elif v == [-1,1]:
-        return 45
-    elif v == [0,1]:
-        return 90
-    elif v == [1,1]:
-        return 135
-    elif v == [1,0]:
-        return 180
-    elif v == [1,-1]:
-        return 225
-    elif v == [0,-1]:
-        return 270
-    elif v == [-1,-1]:
-        return 315
+    dy, dx = v
+    angle = math.degrees(math.atan2(dx, -dy))
+    return angle % 360
 
 def polarFactor(rel_deg):
     if rel_deg >= 30 and rel_deg < 60:
@@ -86,12 +74,10 @@ class Pathfinder:
         p2y = self.boatPos[0]+vector[0]
         p2x = self.boatPos[1]+vector[1]
         self.boatPos = [p2y, p2x]
-        if self.boatDir is not None:
-            ang = relative_wind_angle(self.boatDir, getCircleAngle([p2y,p2x]))
-        if not valid:
-            print(ang)
-            return not self.checkNoGo(p2y,p2x,self.boatDir)
-        return True
+        if valid:
+            return True
+        else:
+            return relative_wind_angle(self.boatDir, self.getDirSpeed(p2y,p2x)[0]) >= 30
 
     def getPossibleMoves(self,y,x):
         return
@@ -99,8 +85,6 @@ class Pathfinder:
 def main():
     mapData, meta = readMap("map_1_Training") #readMap(input("Map filename: "))
     pathfinder = Pathfinder(mapData, meta)
-    print(pathfinder.getDirSpeed(29,2))
-    print(pathfinder.getDirSpeed(18,2))
     print(pathfinder.checkValidMove([-1,1]))
     print(pathfinder.checkValidMove([-1,1]))
 
