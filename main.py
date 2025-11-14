@@ -46,47 +46,42 @@ class Pathfinder:
         w_from = (w_to + 180) % 360
         return W, w_to, w_from
 
-    def getRelAngle(self,y,x,boat_dir_deg):
-        raw = abs(boat_dir_deg - self.getLocalWind(y,x)[2])
-        rel_angle = min(raw, 360 - raw)
-        return rel_angle
-
-    def checkNoGo(self,y,x,boat_dir_deg):
-        if self.getRelAngle(y,x,boat_dir_deg) < 30:
-            return True
-        else:
-            return False
-
     def getSpeedFactor(self,y,x,boat_dir_deg):
-        speed_factor = polarFactor(self.getRelAngle(y,x,boat_dir_deg))
+        speed_factor = polarFactor(relative_wind_angle(self.getDirSpeed(y,x)[0],boat_dir_deg))
         return speed_factor
 
-    def getDirSpeed(self,y,x): #dir, speed
+    def getDirSpeed(self,y,x):
         windDir = self.mapData["windDir"][y-1][x-1]
         windSpeed = self.mapData["windSpeed"][y-1][x-1]
         return windDir, windSpeed
 
-    def checkValidMove(self,vector):
-        valid = False
+    def checkValidMove(self, vector):
+        p2y = self.boatPos[0] + vector[0]
+        p2x = self.boatPos[1] + vector[1]
+        new_dir = getCircleAngle(vector)
         if self.boatDir is None:
-            valid = True
-        self.boatDir = getCircleAngle(vector)
-        p2y = self.boatPos[0]+vector[0]
-        p2x = self.boatPos[1]+vector[1]
-        self.boatPos = [p2y, p2x]
-        if valid:
             return True
-        else:
-            return relative_wind_angle(self.boatDir, self.getDirSpeed(p2y,p2x)[0]) >= 30
+        wind_dir = self.getDirSpeed(p2y, p2x)[0]
+        return relative_wind_angle(new_dir, wind_dir) >= 30
 
-    def getPossibleMoves(self,y,x):
-        return
+    def getPossibleMoves(self):
+        vectors = [[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1]]
+        possible = []
+        for vector in vectors:
+            if (0 < self.boatPos[0] + vector[0] < 31) and (0 < self.boatPos[1] + vector[1] < 31):
+                if self.checkValidMove(vector): #and vector does not go out of bounds
+                    possible.append(vector)
+        return possible
+    
+    def applyMove(self, vector):
+        self.boatDir = getCircleAngle(vector)
+        self.boatPos = [self.boatPos[0] + vector[0],
+                        self.boatPos[1] + vector[1]]
 
 def main():
     mapData, meta = readMap("map_1_Training") #readMap(input("Map filename: "))
     pathfinder = Pathfinder(mapData, meta)
-    print(pathfinder.checkValidMove([-1,1]))
-    print(pathfinder.checkValidMove([-1,1]))
+    print(pathfinder.getPossibleMoves())
 
 if __name__ == "__main__":
     main()
