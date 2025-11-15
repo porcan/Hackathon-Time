@@ -30,7 +30,12 @@ def relative_wind_angle(boat_dir, wind_dir):
     diff = (wind_dir - boat_dir) % 360
     return abs(diff - 180)
 
-
+compassDirs = {0 : "N",
+               45 : "NE",
+               135 : "SE",
+               180 : "S",
+               225 : "SW",
+               315 : "NW"}
 
 class Node:
     def __init__(self, y, x, parent, vector):
@@ -77,7 +82,7 @@ class Pathfinder:
         if node.vector is None:
             return True
         wind_dir = self.getDirSpeed(ny, nx)[0]
-        return relative_wind_angle(new_dir, wind_dir) >= 30
+        return relative_wind_angle(new_dir, wind_dir) > 30
 
     def getPossibleMoves(self, node):
         boat_y, boat_x = node.y, node.x
@@ -120,11 +125,17 @@ class Pathfinder:
             current = current.parent
         #path.append(current.vector)
 
+        route = ""
         for item in reversed(path):
-            print(item)
+            route = route + compassDirs[int(getCircleAngle(item))]
+            route = route + "\n"
+        route = route[:len(route)-1]
+        
+        file = open("route.txt","w")
+        file.write(route)
 
-def main():
-    mapData, meta = readMap("map_1_Training") #readMap(input("Map filename: "))
+def main(): 
+    mapData, meta = readMap("map_2_Main") #readMap(input("Map filename: "))
     
     pathfinder = Pathfinder(mapData, meta)
     pathfinder.search()
